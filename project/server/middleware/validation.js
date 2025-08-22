@@ -21,11 +21,12 @@ const schemas = {
     phone: Joi.string().pattern(/^\+?[1-9]\d{1,14}$/).required(),
     password: Joi.string().min(6).required(),
     userType: Joi.string().valid('parent', 'delivery', 'school', 'caterer').required(),
+    // Common fields per role
+    locationName: Joi.when('userType', { is: Joi.valid('parent','delivery','school','caterer'), then: Joi.string().required() }),
+    address: Joi.when('userType', { is: Joi.valid('parent','delivery','school','caterer'), then: Joi.string().required() }),
     // Parent fields
     houseNo: Joi.when('userType', { is: 'parent', then: Joi.string().required() }),
-    locationName: Joi.when('userType', { is: 'parent', then: Joi.string().required() }),
     cityName: Joi.when('userType', { is: 'parent', then: Joi.string().required() }),
-    address: Joi.when('userType', { is: Joi.valid('parent', 'delivery', 'school', 'caterer'), then: Joi.string().required() }),
     // Delivery fields
     name: Joi.when('userType', { is: 'delivery', then: Joi.string().required() }),
     vehicleType: Joi.when('userType', { is: 'delivery', then: Joi.string().required() }),
@@ -34,8 +35,8 @@ const schemas = {
     // School fields
     schoolName: Joi.when('userType', { is: 'school', then: Joi.string().required() }),
     schoolId: Joi.when('userType', { is: 'school', then: Joi.string().required() }),
-    contactPerson: Joi.when('userType', { is: Joi.valid('school', 'caterer'), then: Joi.string().required() }),
-    establishedYear: Joi.when('userType', { is: 'school', then: Joi.number().integer().min(1800).max(new Date().getFullYear()) }),
+    contactPerson: Joi.when('userType', { is: 'school', then: Joi.string().required() }),
+    establishedYear: Joi.when('userType', { is: 'school', then: Joi.number().integer().min(1800).max(new Date().getFullYear()).required() }),
     classes: Joi.when('userType', { is: 'school', then: Joi.string().required() }),
     // Caterer fields
     businessName: Joi.when('userType', { is: 'caterer', then: Joi.string().required() }),

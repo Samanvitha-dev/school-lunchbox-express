@@ -29,7 +29,7 @@ class User {
       let coordinates;
       
       if (userType === 'parent') {
-        doorNo = await getAvailableDoorNumbers(client, 'house', locationName);
+        doorNo = houseNo || await getAvailableDoorNumbers(client, 'house', locationName);
         if (!doorNo) {
           throw new Error(`No available houses in ${locationName}`);
         }
@@ -74,15 +74,19 @@ class User {
           await client.query(
             `INSERT INTO parents (id, house_no, location_name, city_name, address, latitude, longitude, loyalty_points) 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-            [userId, doorNo, locationName, 'Nellore', coordinates?.address || address, coordinates?.latitude, coordinates?.longitude, 0]
+            [userId, houseNo || doorNo, locationName, cityName || 'Nellore', coordinates?.address || address, coordinates?.latitude, coordinates?.longitude, 0]
           );
           break;
           
         case 'delivery':
+          // Parse service areas (comma-separated string to array)
+          const areas = (serviceArea && typeof serviceArea === 'string')
+            ? serviceArea.split(',').map(s => s.trim()).filter(Boolean)
+            : [locationName].filter(Boolean);
           await client.query(
             `INSERT INTO delivery_staff (id, name, address, latitude, longitude, vehicle_type, vehicle_number, service_area) 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-            [userId, name, coordinates?.address || address, coordinates?.latitude, coordinates?.longitude, vehicleType, vehicleNumber, ['Balaji Nagar', 'AC Nagar', 'Stonehousepeta', 'Harinathpuram']]
+            [userId, name, coordinates?.address || address, coordinates?.latitude, coordinates?.longitude, vehicleType, vehicleNumber, areas]
           );
           break;
           
@@ -90,7 +94,7 @@ class User {
           await client.query(
             `INSERT INTO schools (id, school_name, school_id, address, latitude, longitude, contact_person, established_year, classes) 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-            [userId, schoolName, schoolId, coordinates?.address || address, coordinates?.latitude, coordinates?.longitude, contactPerson, establishedYear || 2000, classes?.split(',') || ['1st Grade', '2nd Grade', '3rd Grade', '4th Grade', '5th Grade']]
+            [userId, schoolName, schoolId, coordinates?.address || address, coordinates?.latitude, coordinates?.longitude, contactPerson, parseInt(establishedYear || 2000, 10), classes?.split(',') || ['1st Grade', '2nd Grade', '3rd Grade', '4th Grade', '5th Grade']]
           );
           break;
           
