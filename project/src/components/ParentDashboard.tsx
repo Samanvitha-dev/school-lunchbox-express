@@ -40,6 +40,8 @@ interface Order {
   deliveryPerson?: string;
   qrCode: string;
   tracking_id?: string;
+  nutrCalories?: number;
+  nutrProtein?: number;
 }
 
 interface CartItem {
@@ -85,6 +87,8 @@ export default function ParentDashboard() {
     allergies: '',
     preferences: ''
   });
+  const [confirmedDates, setConfirmedDates] = useState<string[]>([]);
+  const [nutritionTotals, setNutritionTotals] = useState<{ calories: number; protein: number }>({ calories: 0, protein: 0 });
 
   // Mock menu items for caterer mode
   const menuItems: MenuItem[] = [
@@ -131,7 +135,15 @@ export default function ParentDashboard() {
     loadChildren();
     loadOrders();
     loadNotifications();
+    loadConfirmed();
   }, []);
+
+  const loadConfirmed = async () => {
+    try {
+      const { dates } = await orderService.getConfirmedDates();
+      setConfirmedDates(dates || []);
+    } catch {}
+  };
 
   const loadChildren = async () => {
     try {
@@ -166,11 +178,20 @@ export default function ParentDashboard() {
         deliveryTime: o.delivery_time,
         deliveryPerson: o.delivery_person_name,
         qrCode: o.qr_code,
-        tracking_id: o.tracking_id
+        tracking_id: o.tracking_id,
+        nutrCalories: (o.items || []).reduce((sum: number, it: any) => sum + (Number(it.menuItem?.calories || 0) * Number(it.quantity || 1)), 0),
+        nutrProtein: (o.items || []).reduce((sum: number, it: any) => sum + (Number(it.menuItem?.protein_grams || 0) * Number(it.quantity || 1)), 0)
       }));
       setOrders(mapped);
+      // aggregate nutrition across orders (e.g., current month)
+      const totals = mapped.reduce((acc, o) => ({
+        calories: acc.calories + (o.nutrCalories || 0),
+        protein: acc.protein + (o.nutrProtein || 0)
+      }), { calories: 0, protein: 0 });
+      setNutritionTotals(totals);
     } catch (e) {
       setOrders([]);
+      setNutritionTotals({ calories: 0, protein: 0 });
     }
   };
 
@@ -308,6 +329,50 @@ export default function ParentDashboard() {
               <p className="text-2xl font-bold">{orders.filter(o => o.status !== 'delivered').length}</p>
             </div>
             <Clock className="w-8 h-8 text-purple-200" />
+          </div>
+        </div>
+      </div>
+
+      {/* Track Orders - Undelivered with route visual */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold mb-4">Track Orders</h3>
+        <div className="space-y-3">
+          {orders.filter(o => o.status !== 'delivered').map((o) => (
+            <div key={o.id} className="border rounded p-3">
+              <div className="flex justify-between items-center mb-2">
+                <div className="font-medium">{o.childName}</div>
+                <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(o.status)}`}>{o.status}</span>
+              </div>
+              {/* Simple route visualization */}
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <MapPin className="w-4 h-4 text-red-500" />
+                <div className="flex-1">
+                  <svg viewBox="0 0 100 6" className="w-full h-2">
+                    <line x1="0" y1="3" x2="100" y2="3" stroke="#10B981" strokeWidth="3" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <MapPin className="w-4 h-4 text-green-600" />
+              </div>
+              <div className="mt-1 text-xs text-gray-500">Route: Home → School</div>
+            </div>
+          ))}
+          {orders.filter(o => o.status !== 'delivered').length === 0 && (
+            <div className="text-sm text-gray-500">No active deliveries.</div>
+          )}
+        </div>
+      </div>
+
+      {/* Nutrition Analytics */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold mb-4">Nutrition Analytics</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-3 bg-blue-50 rounded">
+            <div className="text-xs text-blue-600">Total Calories</div>
+            <div className="text-xl font-bold text-blue-700">{nutritionTotals.calories}</div>
+          </div>
+          <div className="p-3 bg-green-50 rounded">
+            <div className="text-xs text-green-600">Total Protein (g)</div>
+            <div className="text-xl font-bold text-green-700">{nutritionTotals.protein}</div>
           </div>
         </div>
       </div>
@@ -614,6 +679,32 @@ export default function ParentDashboard() {
   const renderOrders = () => (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold">Order History</h3>
+
+      {/* Year Calendar with confirmed dates */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <h4 className="font-medium mb-2">Yearly Calendar</h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {Array.from({ length: 12 }).map((_, m) => (
+            <div key={m} className="border rounded p-2">
+              <div className="text-sm font-semibold mb-1">{new Date(2000, m, 1).toLocaleString('en-IN', { month: 'long' })}</div>
+              <div className="grid grid-cols-7 gap-1 text-xs">
+                {Array.from({ length: 31 }).map((__, d) => {
+                  const day = (d + 1).toString().padStart(2, '0');
+                  const month = (m + 1).toString().padStart(2, '0');
+                  const iso = `${new Date().getFullYear()}-${month}-${day}`;
+                  const confirmed = confirmedDates.includes(iso);
+                  return (
+                    <div key={d} className={`h-6 flex items-center justify-center rounded ${confirmed ? 'bg-green-100 text-green-700' : 'bg-gray-50 text-gray-400'}`}>
+                      {d + 1}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="space-y-4">
         {orders.map((order) => (
           <div key={order.id} className="bg-white rounded-lg shadow-md p-6">
@@ -630,7 +721,6 @@ export default function ParentDashboard() {
                 </span>
               </div>
             </div>
-            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div>
                 <p className="text-gray-600">Items:</p>
@@ -645,12 +735,6 @@ export default function ParentDashboard() {
                 <p>{order.deliveryTime}</p>
               </div>
             </div>
-            
-            {order.deliveryPerson && (
-              <div className="mt-3 pt-3 border-t">
-                <p className="text-sm text-gray-600">Delivery Person: <span className="font-medium">{order.deliveryPerson}</span></p>
-              </div>
-            )}
           </div>
         ))}
       </div>

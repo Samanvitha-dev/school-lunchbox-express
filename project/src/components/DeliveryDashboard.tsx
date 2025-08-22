@@ -3,7 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { useOrders } from '../hooks/useOrders';
 import orderService from '../services/orderService';
 import notificationService from '../services/notificationService';
-import { MapPin, Clock, User, Package, Route, CheckCircle, XCircle, Phone, Navigation } from 'lucide-react';
+import deliveryService from '../services/deliveryService';
+import { MapPin, Clock, User, Package, Route, CheckCircle, XCircle, Phone, Navigation, Trophy } from 'lucide-react';
 
 const DeliveryDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -12,11 +13,13 @@ const DeliveryDashboard: React.FC = () => {
   const [pendingOrders, setPendingOrders] = useState([]);
   const [acceptedOrders, setAcceptedOrders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
   // Load data on component mount
   React.useEffect(() => {
     loadPendingOrders();
     loadAcceptedOrders();
+    loadLeaderboard();
   }, []);
 
   const loadPendingOrders = async () => {
@@ -35,6 +38,13 @@ const DeliveryDashboard: React.FC = () => {
     } catch (error) {
       console.error('Failed to load accepted orders:', error);
     }
+  };
+
+  const loadLeaderboard = async () => {
+    try {
+      const { leaderboard } = await deliveryService.getLeaderboard();
+      setLeaderboard(leaderboard || []);
+    } catch {}
   };
 
   const allOrders = [...acceptedOrders];
@@ -109,6 +119,31 @@ const DeliveryDashboard: React.FC = () => {
             <p className="text-2xl font-bold">{completedOrders.length}</p>
             <p className="text-green-100 text-sm">Delivered</p>
           </div>
+        </div>
+      </div>
+
+      {/* Leaderboard */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-bold text-gray-800 flex items-center"><Trophy className="w-5 h-5 mr-2 text-yellow-500"/>Top Performers</h3>
+          <span className="text-xs text-gray-500">Monthly</span>
+        </div>
+        <div className="space-y-2">
+          {leaderboard.map((row) => (
+            <div key={row.rank} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+              <div className="flex items-center space-x-3">
+                <div className="w-6 h-6 rounded-full bg-yellow-100 text-yellow-700 flex items-center justify-center text-xs font-bold">{row.rank}</div>
+                <div>
+                  <div className="font-medium">{row.name}</div>
+                  <div className="text-xs text-gray-500">{row.deliveries_completed} deliveries • {row.avg_delivery_time} min avg</div>
+                </div>
+              </div>
+              <div className="text-xs text-green-700">{row.reward || ''}</div>
+            </div>
+          ))}
+          {leaderboard.length === 0 && (
+            <div className="text-sm text-gray-500">No leaderboard data available.</div>
+          )}
         </div>
       </div>
 
