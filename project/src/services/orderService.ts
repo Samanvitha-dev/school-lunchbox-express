@@ -1,6 +1,7 @@
 import api, { endpoints } from './api';
 
 export interface OrderData {
+  parentId?: string;
   childId: string;
   orderDate: string;
   deliveryTime: string;
@@ -40,6 +41,16 @@ class OrderService {
 
   async updateOrderStatus(orderId: string, status: string) {
     const response = await api.put(endpoints.orderStatus(orderId), { status });
+    return response.data;
+  }
+
+  async reorderWeekday(orderId: string, weekday: number | string) {
+    const response = await api.post(`${endpoints.orders}/reorder-weekday`, { orderId, weekday });
+    return response.data;
+  }
+
+  async getConfirmedDates() {
+    const response = await api.get(`${endpoints.orders}/confirmed-dates`);
     return response.data;
   }
 }

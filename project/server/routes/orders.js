@@ -7,6 +7,8 @@ const roleAuth = require('../middleware/roleAuth');
 
 // Order routes
 router.post('/', auth, roleAuth(['parent']), validateRequest(schemas.createOrder), orderController.createOrder);
+router.post('/reorder-weekday', auth, roleAuth(['parent']), orderController.reorderForWeekday);
+router.get('/confirmed-dates', auth, roleAuth(['parent']), orderController.getConfirmedDates);
 router.get('/', auth, orderController.getOrders);
 router.get('/pending', auth, roleAuth(['delivery']), orderController.getPendingOrders);
 router.put('/:id/accept', auth, roleAuth(['delivery']), orderController.acceptOrder);

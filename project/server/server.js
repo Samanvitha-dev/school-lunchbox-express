@@ -15,6 +15,9 @@ const userRoutes = require('./routes/users');
 const orderRoutes = require('./routes/orders');
 const menuRoutes = require('./routes/menu');
 const notificationRoutes = require('./routes/notifications');
+const deliveryRoutes = require('./routes/deliveries');
+const schoolRoutes = require('./routes/schools');
+const studentRoutes = require('./routes/students');
 
 const app = express();
 const server = http.createServer(app);
@@ -52,6 +55,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/deliveries', deliveryRoutes);
+app.use('/api/schools', schoolRoutes);
+app.use('/api/students', studentRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

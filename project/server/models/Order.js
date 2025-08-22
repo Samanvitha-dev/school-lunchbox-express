@@ -98,7 +98,11 @@ class Order {
                'id', mi.id,
                'name', mi.name,
                'price', mi.price,
-               'catererId', mi.caterer_id
+               'catererId', mi.caterer_id,
+               'calories', mi.calories,
+               'protein_grams', mi.protein_grams,
+               'category', mi.category,
+               'allergens', mi.allergens
              ),
              'quantity', oi.quantity,
              'specialInstructions', oi.special_instructions
@@ -117,45 +121,60 @@ class Order {
     return result.rows;
   }
 
-  static async findByDeliveryStaffId(deliveryStaffId) {
+  static async findById(id) {
+    const result = await db.query('SELECT * FROM orders WHERE id = $1', [id]);
+    return result.rows[0] || null;
+  }
+
+  static async getItems(orderId) {
     const result = await db.query(
-      'SELECT * FROM orders WHERE delivery_staff_id = $1 ORDER BY order_date DESC, delivery_time',
-      [deliveryStaffId]
+      `SELECT oi.*, mi.id as menu_item_id, mi.name, mi.price, mi.calories, mi.protein_grams, mi.caterer_id
+       FROM order_items oi
+       JOIN menu_items mi ON oi.menu_item_id = mi.id
+       WHERE oi.order_id = $1`,
+      [orderId]
     );
     return result.rows;
   }
 
-  static async findBySchoolId(schoolId) {
+  static async createFromExisting(orderRow, newDate) {
+    const items = await this.getItems(orderRow.id);
+    const orderData = {
+      parentId: orderRow.parent_id,
+      childId: orderRow.child_id,
+      childName: orderRow.child_name,
+      schoolId: orderRow.school_id,
+      schoolName: orderRow.school_name,
+      pickupAddress: orderRow.pickup_address,
+      deliveryAddress: orderRow.delivery_address,
+      orderDate: newDate,
+      deliveryTime: orderRow.delivery_time,
+      specialNotes: orderRow.special_notes,
+      isRecurring: false,
+      recurringDays: [],
+      amount: Number(orderRow.amount),
+      orderType: orderRow.order_type,
+      catererId: orderRow.caterer_id,
+      items: items.map(i => ({ menuItem: { id: i.menu_item_id, price: i.price, name: i.name, catererId: i.caterer_id }, quantity: i.quantity }))
+    };
+    return await this.create(orderData);
+  }
+
+  static async getAll() {
+    const result = await db.query('SELECT * FROM orders ORDER BY created_at DESC');
+    return result.rows;
+  }
+
+  static async getTodayOrders() {
     const result = await db.query(
-      'SELECT * FROM orders WHERE school_id = $1 ORDER BY order_date DESC, delivery_time',
-      [schoolId]
+      'SELECT * FROM orders WHERE order_date = CURRENT_DATE ORDER BY delivery_time'
     );
     return result.rows;
   }
 
-  static async findByCatererId(catererId) {
+  static async getPendingOrders() {
     const result = await db.query(
-      `SELECT o.*, 
-       COALESCE(
-         json_agg(
-           json_build_object(
-             'menuItem', json_build_object(
-               'id', mi.id,
-               'name', mi.name,
-               'price', mi.price
-             ),
-             'quantity', oi.quantity
-           )
-         ) FILTER (WHERE oi.id IS NOT NULL), 
-         '[]'
-       ) as items
-       FROM orders o
-       LEFT JOIN order_items oi ON o.id = oi.order_id
-       LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id
-       WHERE o.caterer_id = $1
-       GROUP BY o.id
-       ORDER BY o.created_at DESC`,
-      [catererId]
+      "SELECT * FROM orders WHERE status = 'ordered' ORDER BY created_at ASC"
     );
     return result.rows;
   }
@@ -194,30 +213,6 @@ class Order {
     
     const result = await db.query(query, params);
     return result.rows[0];
-  }
-
-  static async findById(id) {
-    const result = await db.query('SELECT * FROM orders WHERE id = $1', [id]);
-    return result.rows[0] || null;
-  }
-
-  static async getAll() {
-    const result = await db.query('SELECT * FROM orders ORDER BY created_at DESC');
-    return result.rows;
-  }
-
-  static async getTodayOrders() {
-    const result = await db.query(
-      'SELECT * FROM orders WHERE order_date = CURRENT_DATE ORDER BY delivery_time'
-    );
-    return result.rows;
-  }
-
-  static async getPendingOrders() {
-    const result = await db.query(
-      "SELECT * FROM orders WHERE status = 'ordered' ORDER BY created_at ASC"
-    );
-    return result.rows;
   }
 }
 

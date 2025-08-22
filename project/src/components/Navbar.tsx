@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Bell, User, LogOut, Menu, X } from 'lucide-react';
-import { getNotificationsByUserId } from '../data/mockDatabase';
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -9,7 +8,7 @@ const Navbar: React.FC = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const notifications = user ? getNotificationsByUserId(user.id) : [];
+  const notifications: any[] = [];
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const getUserTypeLabel = (userType: string) => {
@@ -122,43 +121,28 @@ const Navbar: React.FC = () => {
             </div>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Toggle */}
           <div className="md:hidden">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-gray-600 hover:text-gray-800"
+              className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 py-4">
-            <div className="space-y-4">
-              <div className="px-4">
-                <p className="font-medium text-gray-800">{user?.username}</p>
-                <p className="text-sm text-gray-600">{getUserTypeLabel(user?.userType || '')}</p>
-              </div>
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
-              >
-                <Bell className="w-4 h-4" />
-                <span>Notifications ({unreadCount})</span>
-              </button>
-              <button
-                onClick={logout}
-                className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 flex items-center space-x-2"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
-              </button>
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-gray-200 p-4">
+          <div className="flex flex-col space-y-2">
+            <button className="text-left p-2 hover:bg-gray-100 rounded-lg">Dashboard</button>
+            <button className="text-left p-2 hover:bg-gray-100 rounded-lg">Orders</button>
+            <button className="text-left p-2 hover:bg-gray-100 rounded-lg">Caterers</button>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

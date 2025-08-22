@@ -92,6 +92,50 @@ const orderController = {
     }
   },
 
+  async reorderForWeekday(req, res) {
+    try {
+      const { orderId, weekday } = req.body; // weekday: 0-6 (Sun-Sat) or string
+      const baseOrder = await Order.findById(orderId);
+      if (!baseOrder) return res.status(404).json({ error: 'Order not found' });
+      
+      const dayIndex = typeof weekday === 'string' ? ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'].indexOf(weekday.toLowerCase()) : weekday;
+      if (dayIndex < 0 || dayIndex > 6) return res.status(400).json({ error: 'Invalid weekday' });
+      
+      const today = new Date(baseOrder.order_date);
+      const month = today.getMonth();
+      const year = today.getFullYear();
+      const created = [];
+      
+      // Start from next day of base order
+      const start = new Date(year, month, today.getDate() + 1);
+      for (let d = new Date(start); d.getMonth() === month; d.setDate(d.getDate() + 1)) {
+        if (d.getDay() === dayIndex) {
+          const iso = d.toISOString().slice(0, 10);
+          const newOrder = await Order.createFromExisting(baseOrder, iso);
+          created.push(newOrder);
+        }
+      }
+      
+      res.json({ message: 'Reorders created for remaining weekdays', count: created.length, orders: created });
+    } catch (error) {
+      console.error('Reorder weekday error:', error);
+      res.status(500).json({ error: 'Failed to create reorders' });
+    }
+  },
+
+  async getConfirmedDates(req, res) {
+    try {
+      const result = await Order.findByParentId(req.user.id);
+      const confirmed = result
+        .filter(o => ['accepted','picked','in-progress','delivered','ordered'].includes(o.status))
+        .map(o => o.order_date);
+      res.json({ dates: Array.from(new Set(confirmed)) });
+    } catch (error) {
+      console.error('Get confirmed dates error:', error);
+      res.status(500).json({ error: 'Failed to fetch confirmed dates' });
+    }
+  },
+
   async getOrders(req, res) {
     try {
       let orders = [];

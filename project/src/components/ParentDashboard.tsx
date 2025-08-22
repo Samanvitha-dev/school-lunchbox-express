@@ -15,6 +15,8 @@ import {
   Gift,
   History
 } from 'lucide-react';
+import userService from '../services/userService';
+import orderService from '../services/orderService';
 
 interface Child {
   id: string;
@@ -37,6 +39,7 @@ interface Order {
   deliveryTime: string;
   deliveryPerson?: string;
   qrCode: string;
+  tracking_id?: string;
 }
 
 interface CartItem {
@@ -130,49 +133,45 @@ export default function ParentDashboard() {
     loadNotifications();
   }, []);
 
-  const loadChildren = () => {
-    // Mock data - in real app, fetch from API
-    setChildren([
-      {
-        id: '1',
-        name: 'Aarav Sharma',
-        school: 'DPS Koramangala',
-        class: '5th Grade',
-        age: 10,
-        allergies: ['Nuts'],
-        preferences: ['Vegetarian']
-      }
-    ]);
+  const loadChildren = async () => {
+    try {
+      const { children: apiChildren } = await userService.getChildren();
+      const mapped: Child[] = (apiChildren || []).map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        school: c.school_name,
+        class: c.class,
+        age: c.age,
+        allergies: c.allergies || [],
+        preferences: c.preferences || []
+      }));
+      setChildren(mapped);
+    } catch (e) {
+      // fallback to empty
+      setChildren([]);
+    }
   };
 
-  const loadOrders = () => {
-    // Mock data - in real app, fetch from API
-    setOrders([
-      {
-        id: '1',
-        childName: 'Aarav Sharma',
-        school: 'DPS Koramangala',
-        items: ['Rice', 'Dal', 'Vegetables'],
-        amount: 95,
-        status: 'delivered',
-        orderDate: '2024-01-15',
-        deliveryTime: '12:30 PM',
-        deliveryPerson: 'Ramesh Kumar',
-        qrCode: 'LB001'
-      },
-      {
-        id: '2',
-        childName: 'Aarav Sharma',
-        school: 'DPS Koramangala',
-        items: ['Healthy Veggie Box'],
-        amount: 80,
-        status: 'in-progress',
-        orderDate: '2024-01-16',
-        deliveryTime: '12:45 PM',
-        deliveryPerson: 'Suresh Patel',
-        qrCode: 'LB002'
-      }
-    ]);
+  const loadOrders = async () => {
+    try {
+      const { orders: apiOrders } = await orderService.getOrders();
+      const mapped: Order[] = (apiOrders || []).map((o: any) => ({
+        id: o.id,
+        childName: o.child_name,
+        school: o.school_name,
+        items: (o.items || []).map((it: any) => it.menuItem?.name).filter(Boolean),
+        amount: Number(o.amount || 0),
+        status: o.status,
+        orderDate: o.order_date,
+        deliveryTime: o.delivery_time,
+        deliveryPerson: o.delivery_person_name,
+        qrCode: o.qr_code,
+        tracking_id: o.tracking_id
+      }));
+      setOrders(mapped);
+    } catch (e) {
+      setOrders([]);
+    }
   };
 
   const loadNotifications = () => {
@@ -198,21 +197,23 @@ export default function ParentDashboard() {
     setUnreadCount(mockNotifications.filter(n => !n.read).length);
   };
 
-  const handleAddChild = () => {
+  const handleAddChild = async () => {
     if (newChild.name && newChild.school && newChild.class) {
-      const child: Child = {
-        id: Date.now().toString(),
-        name: newChild.name,
-        school: newChild.school,
-        class: newChild.class,
-        age: parseInt(newChild.age) || 0,
-        allergies: newChild.allergies.split(',').map(a => a.trim()).filter(a => a),
-        preferences: newChild.preferences.split(',').map(p => p.trim()).filter(p => p)
-      };
-      
-      setChildren([...children, child]);
-      setNewChild({ name: '', school: '', class: '', age: '', allergies: '', preferences: '' });
-      setShowAddChild(false);
+      try {
+        await userService.addChild({
+          name: newChild.name,
+          schoolName: newChild.school,
+          class: newChild.class,
+          age: parseInt(newChild.age) || 0,
+          allergies: newChild.allergies,
+          preferences: newChild.preferences
+        } as any);
+        await loadChildren();
+        setNewChild({ name: '', school: '', class: '', age: '', allergies: '', preferences: '' });
+        setShowAddChild(false);
+      } catch (e) {
+        // no-op
+      }
     }
   };
 
