@@ -5,32 +5,36 @@ export interface User {
   phone: string;
   password: string;
   userType: 'parent' | 'delivery' | 'school' | 'admin' | 'caterer';
+  doorNo?: string; // Maps to door_no in database
+  address?: string;
+  latitude?: number;
+  longitude?: number;
   createdAt: string;
   isFirstLogin?: boolean;
   loyaltyPoints?: number;
 }
 
 export interface Parent extends User {
-  houseNo: string;
-  locationName: string;
-  cityName: string;
+  houseNo: string; // Maps to house_no in database
+  locationName: string; // Maps to location_name in database
+  cityName: string; // Maps to city_name in database
   latitude: number;
   longitude: number;
-  noOfChildren: number;
+  noOfChildren: number; // Maps to no_of_children in database
   address: string;
   children: Child[];
-  loyaltyPoints: number;
+  loyaltyPoints: number; // Maps to loyalty_points in database
 }
 
 export interface Child {
   id: string;
   name: string;
-  parentId: string;
-  schoolName: string;
-  schoolId: string;
+  parentId: string; // Maps to parent_id in database
+  schoolName: string; // Maps to school_name in database
+  schoolId: string; // Maps to school_id in database
   class: string;
-  allergies: string[];
-  preferences: string[];
+  allergies: string[]; // Database stores as TEXT[] array
+  preferences: string[]; // Database stores as TEXT[] array
   age: number;
 }
 
@@ -38,42 +42,45 @@ export interface DeliveryStaff extends User {
   name: string;
   activeSince: string;
   isActive: boolean;
-  currentStatus: 'available' | 'busy' | 'offline';
+  currentStatus: 'available' | 'busy' | 'offline'; // Maps to current_status in database
   address: string;
   latitude: number;
   longitude: number;
-  serviceArea: string[];
-  vehicleType: string;
-  vehicleNumber: string;
+  serviceArea: string[]; // Maps to service_area TEXT[] in database
+  vehicleType: string; // Maps to vehicle_type in database
+  vehicleNumber: string; // Maps to vehicle_number in database
   rating: number;
-  totalDeliveries: number;
+  totalDeliveries: number; // Maps to total_deliveries in database
+  totalEarnings?: number; // Maps to total_earnings in database
 }
 
 export interface School extends User {
-  schoolName: string;
-  schoolId: string;
+  schoolName: string; // Maps to school_name in database
+  schoolId: string; // Maps to school_id in database
   address: string;
   latitude: number;
   longitude: number;
-  classes: string[];
-  contactPerson: string;
-  establishedYear: number;
+  classes: string[]; // Database stores as TEXT[] array
+  contactPerson: string; // Maps to contact_person in database
+  establishedYear: number; // Maps to established_year in database
+  locationName?: string; // Maps to location_name in database
 }
 
 export interface Caterer extends User {
-  businessName: string;
+  businessName: string; // Maps to business_name in database
   address: string;
-  contactPerson: string;
+  contactPerson: string; // Maps to contact_person in database
   latitude: number;
   longitude: number;
   rating: number;
   isActive: boolean;
   menuItems: MenuItem[];
+  locationName?: string; // Maps to location_name in database
 }
 
 export interface MenuItem {
   id: string;
-  catererId: string;
+  catererId: string; // Maps to caterer_id in database
   name: string;
   description: string;
   items: string[];
@@ -85,45 +92,51 @@ export interface MenuItem {
     fiber: string;
   };
   price: number;
-  category: 'lunchbox' | 'fruit-bowl' | 'snack';
-  isAvailable: boolean;
-  imageUrl?: string;
-  allergens: string[];
+  category: 'lunchbox' | 'fruit_bowl' | 'other'; // Updated to match database enum
+  isAvailable: boolean; // Maps to is_available in database
+  imageUrl?: string; // Maps to image_url in database
+  allergens: string[]; // Database stores as TEXT[] array
+  proteinGrams?: number; // Maps to protein_grams in database
 }
 
 export interface CartItem {
   menuItem: MenuItem;
   quantity: number;
-  specialInstructions?: string;
+  specialInstructions?: string; // Maps to special_instructions in database
 }
 
 export interface LunchboxOrder {
   id: string;
-  parentId: string;
-  childId: string;
-  childName: string;
-  schoolId: string;
-  schoolName: string;
-  pickupAddress: string;
-  deliveryAddress: string;
-  orderDate: string;
-  deliveryTime: string;
+  parentId: string; // Maps to parent_id in database
+  childId: string; // Maps to child_id in database
+  childName: string; // Maps to child_name in database
+  schoolId: string; // Maps to school_id in database
+  schoolName: string; // Maps to school_name in database
+  pickupAddress: string; // Maps to pickup_address in database
+  deliveryAddress: string; // Maps to delivery_address in database
+  pickupDoorNo?: string; // Maps to pickup_door_no in database
+  deliveryDoorNo?: string; // Maps to delivery_door_no in database
+  orderDate: string; // Maps to order_date in database
+  deliveryTime: string; // Maps to delivery_time in database
   status: 'ordered' | 'accepted' | 'picked' | 'in-progress' | 'delivered' | 'cancelled';
-  specialNotes: string;
-  isRecurring: boolean;
-  recurringDays: string[];
-  deliveryStaffId?: string;
-  pickupTime?: string;
-  actualDeliveryTime?: string;
+  specialNotes: string; // Maps to special_notes in database
+  isRecurring: boolean; // Maps to is_recurring in database
+  recurringDays: string[]; // Maps to recurring_days TEXT[] in database
+  deliveryStaffId?: string; // Maps to delivery_staff_id in database
+  pickupTime?: string; // Maps to pickup_time in database
+  actualDeliveryTime?: string; // Maps to actual_delivery_time in database
   amount: number;
+  deliveryCharge?: number; // Maps to delivery_charge in database
+  distanceKm?: number; // Maps to distance_km in database
   paymentStatus: 'pending' | 'paid' | 'failed';
-  qrCode: string;
-  estimatedTime: number;
-  orderType: 'home' | 'caterer';
+  qrCode: string; // Maps to qr_code in database
+  trackingId?: string; // Maps to tracking_id in database
+  estimatedTime: number; // Maps to estimated_time in database
+  orderType: 'home' | 'caterer'; // Maps to order_type in database
   items: CartItem[];
-  catererId?: string;
-  loyaltyPointsEarned?: number;
-  loyaltyPointsUsed?: number;
+  catererId?: string; // Maps to caterer_id in database
+  loyaltyPointsEarned?: number; // Maps to loyalty_points_earned in database
+  loyaltyPointsUsed?: number; // Maps to loyalty_points_used in database
 }
 
 export interface Location {

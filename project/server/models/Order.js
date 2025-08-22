@@ -121,6 +121,105 @@ class Order {
     return result.rows;
   }
 
+  static async findByDeliveryStaffId(deliveryStaffId) {
+    const result = await db.query(
+      `SELECT o.*, 
+       COALESCE(
+         json_agg(
+           json_build_object(
+             'menuItem', json_build_object(
+               'id', mi.id,
+               'name', mi.name,
+               'price', mi.price,
+               'catererId', mi.caterer_id,
+               'calories', mi.calories,
+               'protein_grams', mi.protein_grams,
+               'category', mi.category,
+               'allergens', mi.allergens
+             ),
+             'quantity', oi.quantity,
+             'specialInstructions', oi.special_instructions
+           )
+         ) FILTER (WHERE oi.id IS NOT NULL), 
+         '[]'
+       ) as items
+       FROM orders o
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id
+       WHERE o.delivery_staff_id = $1
+       GROUP BY o.id
+       ORDER BY o.created_at DESC`,
+      [deliveryStaffId]
+    );
+    return result.rows;
+  }
+
+  static async findBySchoolId(schoolId) {
+    const result = await db.query(
+      `SELECT o.*, 
+       COALESCE(
+         json_agg(
+           json_build_object(
+             'menuItem', json_build_object(
+               'id', mi.id,
+               'name', mi.name,
+               'price', mi.price,
+               'catererId', mi.caterer_id,
+               'calories', mi.calories,
+               'protein_grams', mi.protein_grams,
+               'category', mi.category,
+               'allergens', mi.allergens
+             ),
+             'quantity', oi.quantity,
+             'specialInstructions', oi.special_instructions
+           )
+         ) FILTER (WHERE oi.id IS NOT NULL), 
+         '[]'
+       ) as items
+       FROM orders o
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id
+       WHERE o.school_id = $1
+       GROUP BY o.id
+       ORDER BY o.created_at DESC`,
+      [schoolId]
+    );
+    return result.rows;
+  }
+
+  static async findByCatererId(catererId) {
+    const result = await db.query(
+      `SELECT o.*, 
+       COALESCE(
+         json_agg(
+           json_build_object(
+             'menuItem', json_build_object(
+               'id', mi.id,
+               'name', mi.name,
+               'price', mi.price,
+               'catererId', mi.caterer_id,
+               'calories', mi.calories,
+               'protein_grams', mi.protein_grams,
+               'category', mi.category,
+               'allergens', mi.allergens
+             ),
+             'quantity', oi.quantity,
+             'specialInstructions', oi.special_instructions
+           )
+         ) FILTER (WHERE oi.id IS NOT NULL), 
+         '[]'
+       ) as items
+       FROM orders o
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id
+       WHERE o.caterer_id = $1
+       GROUP BY o.id
+       ORDER BY o.created_at DESC`,
+      [catererId]
+    );
+    return result.rows;
+  }
+
   static async findById(id) {
     const result = await db.query('SELECT * FROM orders WHERE id = $1', [id]);
     return result.rows[0] || null;

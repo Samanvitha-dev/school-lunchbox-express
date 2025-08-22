@@ -6,8 +6,10 @@ class User {
   static async create(userData) {
     const {
       username, email, phone, password, userType,
+      // Common fields
+      doorNo, address, locationName,
       // Parent specific
-      houseNo, locationName, cityName, address,
+      houseNo, cityName,
       // Delivery specific
       name, vehicleType, vehicleNumber, serviceArea,
       // School specific
@@ -24,43 +26,49 @@ class User {
       // Hash password
       const passwordHash = await bcrypt.hash(password, 10);
       
-      // Get available door number based on user type and location
-      let doorNo;
+      // Determine door number based on user type and provided data
+      let finalDoorNo;
       let coordinates;
       
       if (userType === 'parent') {
-        doorNo = houseNo || await getAvailableDoorNumbers(client, 'house', locationName);
-        if (!doorNo) {
+        // For parents, use provided houseNo as doorNo, or get an available one
+        finalDoorNo = houseNo || doorNo || await getAvailableDoorNumbers(client, 'house', locationName);
+        if (!finalDoorNo) {
           throw new Error(`No available houses in ${locationName}`);
         }
       } else if (userType === 'delivery') {
-        doorNo = await getAvailableDoorNumbers(client, 'delivery', locationName);
-        if (!doorNo) {
+        finalDoorNo = doorNo || await getAvailableDoorNumbers(client, 'delivery', locationName);
+        if (!finalDoorNo) {
           throw new Error(`No available delivery locations in ${locationName}`);
         }
       } else if (userType === 'school') {
-        doorNo = await getAvailableDoorNumbers(client, 'school', locationName);
-        if (!doorNo) {
+        finalDoorNo = doorNo || await getAvailableDoorNumbers(client, 'school', locationName);
+        if (!finalDoorNo) {
           throw new Error(`School already exists in ${locationName}`);
         }
       } else if (userType === 'caterer') {
-        doorNo = await getAvailableDoorNumbers(client, 'caterer', locationName);
-        if (!doorNo) {
+        finalDoorNo = doorNo || await getAvailableDoorNumbers(client, 'caterer', locationName);
+        if (!finalDoorNo) {
           throw new Error(`Caterer already exists in ${locationName}`);
         }
       } else {
-        doorNo = 'A001'; // Admin
+        finalDoorNo = doorNo || 'A001'; // Admin
       }
       
-      coordinates = getCoordinatesFromDoorNumber(doorNo);
+      coordinates = getCoordinatesFromDoorNumber(finalDoorNo);
       
       // Insert into users table
       const userResult = await client.query(
         `INSERT INTO users (username, email, phone, password_hash, user_type, door_no, address, latitude, longitude) 
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
         [
-          username, email, phone, passwordHash, userType, doorNo,
-          coordinates?.address || address || `${doorNo}, Nellore`,
+          username, 
+          email, 
+          phone, 
+          passwordHash, 
+          userType, 
+          finalDoorNo,
+          address || coordinates?.address || `${finalDoorNo}, ${locationName}, Nellore`,
           coordinates?.latitude || 14.4426,
           coordinates?.longitude || 79.9865
         ]
@@ -74,7 +82,16 @@ class User {
           await client.query(
             `INSERT INTO parents (id, house_no, location_name, city_name, address, latitude, longitude, loyalty_points) 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-            [userId, houseNo || doorNo, locationName, cityName || 'Nellore', coordinates?.address || address, coordinates?.latitude, coordinates?.longitude, 0]
+            [
+              userId, 
+              houseNo || finalDoorNo, 
+              locationName, 
+              cityName || 'Nellore', 
+              address || coordinates?.address || `${finalDoorNo}, ${locationName}, Nellore`, 
+              coordinates?.latitude || 14.4426, 
+              coordinates?.longitude || 79.9865, 
+              0
+            ]
           );
           break;
           
@@ -86,15 +103,38 @@ class User {
           await client.query(
             `INSERT INTO delivery_staff (id, name, location_name, address, latitude, longitude, vehicle_type, vehicle_number, service_area) 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-            [userId, name, locationName, coordinates?.address || address, coordinates?.latitude, coordinates?.longitude, vehicleType, vehicleNumber, areas]
+            [
+              userId, 
+              name, 
+              locationName, 
+              address || coordinates?.address || `${finalDoorNo}, ${locationName}, Nellore`, 
+              coordinates?.latitude || 14.4426, 
+              coordinates?.longitude || 79.9865, 
+              vehicleType, 
+              vehicleNumber, 
+              areas
+            ]
           );
           break;
           
         case 'school':
+          // Parse classes (comma-separated string to array)
+          const classArray = classes ? classes.split(',').map(c => c.trim()).filter(Boolean) : ['1st Grade', '2nd Grade', '3rd Grade', '4th Grade', '5th Grade'];
           await client.query(
             `INSERT INTO schools (id, school_name, school_id, location_name, address, latitude, longitude, contact_person, established_year, classes) 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-            [userId, schoolName, schoolId, locationName, coordinates?.address || address, coordinates?.latitude, coordinates?.longitude, contactPerson, parseInt(establishedYear || 2000, 10), classes?.split(',') || ['1st Grade', '2nd Grade', '3rd Grade', '4th Grade', '5th Grade']]
+            [
+              userId, 
+              schoolName, 
+              schoolId, 
+              locationName, 
+              address || coordinates?.address || `${finalDoorNo}, ${locationName}, Nellore`, 
+              coordinates?.latitude || 14.4426, 
+              coordinates?.longitude || 79.9865, 
+              contactPerson, 
+              parseInt(establishedYear || '2000', 10), 
+              classArray
+            ]
           );
           break;
           
@@ -102,7 +142,15 @@ class User {
           await client.query(
             `INSERT INTO caterers (id, business_name, location_name, address, latitude, longitude, contact_person) 
              VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [userId, businessName, locationName, coordinates?.address || address, coordinates?.latitude, coordinates?.longitude, contactPersonCaterer]
+            [
+              userId, 
+              businessName, 
+              locationName, 
+              address || coordinates?.address || `${finalDoorNo}, ${locationName}, Nellore`, 
+              coordinates?.latitude || 14.4426, 
+              coordinates?.longitude || 79.9865, 
+              contactPersonCaterer
+            ]
           );
           break;
       }

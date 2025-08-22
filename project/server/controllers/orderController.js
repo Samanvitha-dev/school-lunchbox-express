@@ -14,12 +14,20 @@ const orderController = {
         return res.status(404).json({ error: 'Child not found' });
       }
       
+      // Get parent details for pickup address
+      const parent = await User.findById(req.user.id);
+      if (!parent) {
+        return res.status(404).json({ error: 'Parent not found' });
+      }
+      
       // Calculate amount
       let amount = 0;
       if (orderType === 'home') {
         amount = 80 + 15; // Food cost + delivery charge
-      } else {
+      } else if (orderType === 'caterer' && items && items.length > 0) {
         amount = items.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0) + 15;
+      } else {
+        return res.status(400).json({ error: 'Invalid order type or missing items' });
       }
       
       // Apply loyalty discount
@@ -32,18 +40,18 @@ const orderController = {
         childName: child.name,
         schoolId: child.school_id,
         schoolName: child.school_name,
-        pickupAddress: req.user.address || 'Home Address',
+        pickupAddress: parent.address || 'Home Address',
         deliveryAddress: `${child.school_name} School`,
         orderDate,
         deliveryTime,
-        specialNotes,
-        isRecurring,
-        recurringDays,
+        specialNotes: specialNotes || '',
+        isRecurring: isRecurring || false,
+        recurringDays: recurringDays || [],
         amount,
         orderType,
         catererId: orderType === 'caterer' ? items[0]?.menuItem.catererId : null,
         items: orderType === 'caterer' ? items : [],
-        loyaltyPointsUsed
+        loyaltyPointsUsed: loyaltyPointsUsed || 0
       };
       
       const order = await Order.create(orderData);
@@ -88,7 +96,7 @@ const orderController = {
       });
     } catch (error) {
       console.error('Create order error:', error);
-      res.status(500).json({ error: 'Failed to create order' });
+      res.status(500).json({ error: error.message || 'Failed to create order' });
     }
   },
 
