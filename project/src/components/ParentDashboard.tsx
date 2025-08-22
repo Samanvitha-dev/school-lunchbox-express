@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import userService from '../services/userService';
 import orderService from '../services/orderService';
+import notificationService from '../services/notificationService';
 
 interface Child {
   id: string;
@@ -76,7 +77,7 @@ export default function ParentDashboard() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [loyaltyPoints, setLoyaltyPoints] = useState(150);
+  const [loyaltyPoints, setLoyaltyPoints] = useState(0); // Will be loaded from user data
   const [showAddChild, setShowAddChild] = useState(false);
   const [orderMode, setOrderMode] = useState<'home' | 'caterer'>('home');
   const [newChild, setNewChild] = useState({
@@ -132,11 +133,37 @@ export default function ParentDashboard() {
 
   useEffect(() => {
     // Load initial data
+    loadUserProfile();
     loadChildren();
     loadOrders();
     loadNotifications();
     loadConfirmed();
   }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      // Extract loyalty points from user context or fetch from API
+      if (user?.loyaltyPoints !== undefined) {
+        setLoyaltyPoints(user.loyaltyPoints);
+      } else if (user?.loyalty_points !== undefined) {
+        setLoyaltyPoints(user.loyalty_points);
+      } else {
+        // Fallback: fetch from API if not in user context
+        const profile = await fetch('/api/auth/profile', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('lunchbox_token')}`
+          }
+        });
+        if (profile.ok) {
+          const data = await profile.json();
+          setLoyaltyPoints(data.user?.loyalty_points || 0);
+        }
+      }
+    } catch (e) {
+      console.error('Error loading user profile:', e);
+      setLoyaltyPoints(0);
+    }
+  };
 
   const loadConfirmed = async () => {
     try {
@@ -195,27 +222,23 @@ export default function ParentDashboard() {
     }
   };
 
-  const loadNotifications = () => {
-    const mockNotifications = [
-      {
-        id: '1',
-        title: 'Order Delivered',
-        message: 'Your lunchbox has been delivered to DPS Koramangala',
-        time: '12:30 PM',
-        read: false,
-        type: 'success'
-      },
-      {
-        id: '2',
-        title: 'Order Picked Up',
-        message: 'Your lunchbox has been picked up by Ramesh Kumar',
-        time: '11:45 AM',
-        read: false,
-        type: 'info'
-      }
-    ];
-    setNotifications(mockNotifications);
-    setUnreadCount(mockNotifications.filter(n => !n.read).length);
+  const loadNotifications = async () => {
+    try {
+      const { notifications: apiNotifications } = await notificationService.getNotifications();
+      const mapped = (apiNotifications || []).map((n: any) => ({
+        id: n.id,
+        title: n.title,
+        message: n.message,
+        time: n.created_at,
+        read: n.is_read,
+        type: n.type
+      }));
+      setNotifications(mapped);
+      setUnreadCount(mapped.filter(n => !n.read).length);
+    } catch (e) {
+      setNotifications([]);
+      setUnreadCount(0);
+    }
   };
 
   const handleAddChild = async () => {

@@ -70,14 +70,9 @@ const authController = {
 
   async getProfile(req, res) {
     try {
-      const user = await User.findByCredentials(req.user.username || req.user.email, null, true); // Get full profile with role data
+      const user = await User.getFullProfile(req.user.id);
       if (!user) {
-        // Fallback to basic user data
-        const basicUser = await User.findById(req.user.id);
-        if (!basicUser) {
-          return res.status(404).json({ error: 'User not found' });
-        }
-        return res.json({ user: basicUser });
+        return res.status(404).json({ error: 'User not found' });
       }
       
       res.json({ user });
