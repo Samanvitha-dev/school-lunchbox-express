@@ -73,16 +73,12 @@ const schemas = {
   createMenuItem: Joi.object({
     name: Joi.string().required(),
     description: Joi.string().allow(''),
-    items: Joi.string().required(),
     price: Joi.number().positive().required(),
-    category: Joi.string().valid('lunchbox', 'fruit-bowl', 'snack').required(),
+    category: Joi.string().valid('lunchbox', 'fruit_bowl', 'other').required(),
     imageUrl: Joi.string().uri().allow(''),
-    allergens: Joi.string().allow(''),
+    allergens: Joi.alternatives(Joi.string(), Joi.array().items(Joi.string())).allow(''),
     calories: Joi.number().integer().min(0),
-    protein: Joi.string().allow(''),
-    carbs: Joi.string().allow(''),
-    fat: Joi.string().allow(''),
-    fiber: Joi.string().allow('')
+    proteinGrams: Joi.number().integer().min(0)
   })
 };
 

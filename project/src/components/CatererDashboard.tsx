@@ -12,10 +12,9 @@ const CatererDashboard: React.FC = () => {
   const [newItem, setNewItem] = useState({
     name: '',
     description: '',
-    items: '',
     price: '',
     calories: '',
-    protein: '',
+    proteinGrams: '',
     category: 'lunchbox',
     allergens: '',
     imageUrl: ''
@@ -46,13 +45,13 @@ const CatererDashboard: React.FC = () => {
         description: newItem.description,
         price: Number(newItem.price || 0),
         calories: Number(newItem.calories || 0),
-        proteinGrams: Number(newItem.protein || 0),
+        proteinGrams: Number(newItem.proteinGrams || 0),
         category: newItem.category as any,
-        allergens: newItem.allergens.split(',').map(a => a.trim()).filter(Boolean),
+        allergens: newItem.allergens,
         imageUrl: newItem.imageUrl
       } as MenuItemData);
       await loadData();
-      setNewItem({ name: '', description: '', items: '', price: '', calories: '', protein: '', category: 'lunchbox', allergens: '', imageUrl: '' });
+      setNewItem({ name: '', description: '', price: '', calories: '', proteinGrams: '', category: 'lunchbox', allergens: '', imageUrl: '' });
     } finally {
       setLoading(false);
     }
@@ -68,7 +67,12 @@ const CatererDashboard: React.FC = () => {
             <input className="border p-2 rounded" placeholder="Name" value={newItem.name} onChange={e=>setNewItem({...newItem,name:e.target.value})}/>
             <input className="border p-2 rounded" placeholder="Price" value={newItem.price} onChange={e=>setNewItem({...newItem,price:e.target.value})}/>
             <input className="border p-2 rounded" placeholder="Calories" value={newItem.calories} onChange={e=>setNewItem({...newItem,calories:e.target.value})}/>
-            <input className="border p-2 rounded" placeholder="Protein (g)" value={newItem.protein} onChange={e=>setNewItem({...newItem,protein:e.target.value})}/>
+            <input className="border p-2 rounded" placeholder="Protein (g)" value={newItem.proteinGrams} onChange={e=>setNewItem({...newItem,proteinGrams:e.target.value})}/>
+            <select className="border p-2 rounded col-span-2" value={newItem.category} onChange={e=>setNewItem({...newItem,category:e.target.value})}>
+              <option value="lunchbox">Lunchbox</option>
+              <option value="fruit_bowl">Fruit Bowl</option>
+              <option value="other">Other</option>
+            </select>
             <input className="border p-2 rounded col-span-2" placeholder="Allergens (comma)" value={newItem.allergens} onChange={e=>setNewItem({...newItem,allergens:e.target.value})}/>
             <input className="border p-2 rounded col-span-2" placeholder="Image URL" value={newItem.imageUrl} onChange={e=>setNewItem({...newItem,imageUrl:e.target.value})}/>
           </div>

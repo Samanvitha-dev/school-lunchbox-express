@@ -3,16 +3,12 @@ import api, { endpoints } from './api';
 export interface MenuItemData {
   name: string;
   description?: string;
-  items: string;
   price: number;
-  category: 'lunchbox' | 'fruit-bowl' | 'snack';
+  category: 'lunchbox' | 'fruit_bowl' | 'other';
   imageUrl?: string;
-  allergens?: string;
+  allergens?: string[] | string;
   calories?: number;
-  protein?: string;
-  carbs?: string;
-  fat?: string;
-  fiber?: string;
+  proteinGrams?: number;
 }
 
 class MenuService {

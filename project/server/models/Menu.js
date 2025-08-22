@@ -3,18 +3,18 @@ const db = require('../config/database');
 class Menu {
   static async create(menuData) {
     const {
-      catererId, name, description, items, price, category,
-      imageUrl, allergens, calories, protein, carbs, fat, fiber
+      catererId, name, description, price, category,
+      imageUrl, allergens, calories, proteinGrams
     } = menuData;
     
     const result = await db.query(
       `INSERT INTO menu_items (
-        caterer_id, name, description, items, price, category,
-        image_url, allergens, calories, protein, carbs, fat, fiber
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
+        caterer_id, name, description, price, category,
+        image_url, allergens, calories, protein_grams
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
       [
-        catererId, name, description, items, price, category,
-        imageUrl, allergens || [], calories, protein, carbs, fat, fiber
+        catererId, name, description || null, price, category,
+        imageUrl, Array.isArray(allergens) ? allergens : [], calories || 0, proteinGrams || 0
       ]
     );
     
@@ -36,19 +36,18 @@ class Menu {
 
   static async update(id, updateData) {
     const {
-      name, description, items, price, category,
-      imageUrl, allergens, calories, protein, carbs, fat, fiber, isAvailable
+      name, description, price, category,
+      imageUrl, allergens, calories, proteinGrams, isAvailable
     } = updateData;
     
     const result = await db.query(
       `UPDATE menu_items SET 
-        name = $1, description = $2, items = $3, price = $4, category = $5,
-        image_url = $6, allergens = $7, calories = $8, protein = $9, carbs = $10, 
-        fat = $11, fiber = $12, is_available = $13, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $14 RETURNING *`,
+        name = $1, description = $2, price = $3, category = $4,
+        image_url = $5, allergens = $6, calories = $7, protein_grams = $8, is_available = COALESCE($9, is_available), updated_at = CURRENT_TIMESTAMP
+       WHERE id = $10 RETURNING *`,
       [
-        name, description, items, price, category,
-        imageUrl, allergens || [], calories, protein, carbs, fat, fiber, isAvailable, id
+        name, description || null, price, category,
+        imageUrl, Array.isArray(allergens) ? allergens : [], calories || 0, proteinGrams || 0, isAvailable, id
       ]
     );
     
