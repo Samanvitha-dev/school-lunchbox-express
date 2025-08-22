@@ -1,15 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Bell, User, LogOut, Menu, X } from 'lucide-react';
+import notificationService from '../services/notificationService';
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const notifications: any[] = [];
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  useEffect(() => {
+    loadNotifications();
+  }, []);
+
+  const loadNotifications = async () => {
+    try {
+      const { notifications: apiNotifications } = await notificationService.getNotifications();
+      const mapped = (apiNotifications || []).map((n: any) => ({
+        id: n.id,
+        title: n.title,
+        message: n.message,
+        timestamp: n.created_at,
+        isRead: n.is_read,
+        type: n.type
+      }));
+      setNotifications(mapped);
+      setUnreadCount(mapped.filter(n => !n.isRead).length);
+    } catch (e) {
+      setNotifications([]);
+      setUnreadCount(0);
+    }
+  };
+
+  const handleMarkAsRead = async (notificationId: string) => {
+    try {
+      await notificationService.markAsRead(notificationId);
+      await loadNotifications(); // Refresh notifications
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      await loadNotifications(); // Refresh notifications
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
+  };
 
   const getUserTypeLabel = (userType: string) => {
     switch (userType) {
@@ -17,6 +58,7 @@ const Navbar: React.FC = () => {
       case 'delivery': return 'Delivery Partner';
       case 'school': return 'School Admin';
       case 'admin': return 'System Admin';
+      case 'caterer': return 'Caterer';
       default: return 'User';
     }
   };
@@ -62,14 +104,23 @@ const Navbar: React.FC = () => {
 
               {showNotifications && (
                 <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-                  <div className="p-4 border-b border-gray-200">
+                  <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                     <h3 className="font-semibold text-gray-800">Notifications</h3>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={handleMarkAllAsRead}
+                        className="text-xs text-blue-600 hover:text-blue-800"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
                   </div>
                   <div className="max-h-64 overflow-y-auto">
                     {notifications.length > 0 ? notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className={`p-4 border-b border-gray-100 hover:bg-gray-50 ${!notification.isRead ? 'bg-blue-50' : ''}`}
+                        className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${!notification.isRead ? 'bg-blue-50' : ''}`}
+                        onClick={() => !notification.isRead && handleMarkAsRead(notification.id)}
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex-1">

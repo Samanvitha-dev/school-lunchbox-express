@@ -52,6 +52,7 @@ export const endpoints = {
   // Users
   children: '/users/children',
   loyaltyPoints: '/users/loyalty-points',
+  userStats: '/users/stats',
   
   // Orders
   orders: '/orders',

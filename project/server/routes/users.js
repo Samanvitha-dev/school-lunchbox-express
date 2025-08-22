@@ -12,4 +12,7 @@ router.put('/children/:id', auth, roleAuth(['parent']), userController.updateChi
 router.delete('/children/:id', auth, roleAuth(['parent']), userController.deleteChild);
 router.put('/loyalty-points', auth, roleAuth(['parent']), userController.updateLoyaltyPoints);
 
+// Admin routes
+router.get('/stats', auth, roleAuth(['admin']), userController.getUserStats);
+
 module.exports = router;

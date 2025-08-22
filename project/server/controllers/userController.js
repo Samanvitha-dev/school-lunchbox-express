@@ -93,6 +93,16 @@ const userController = {
       console.error('Update loyalty points error:', error);
       res.status(500).json({ error: 'Failed to update loyalty points' });
     }
+  },
+
+  async getUserStats(req, res) {
+    try {
+      const stats = await User.getUserStatistics();
+      res.json({ stats });
+    } catch (error) {
+      console.error('Get user stats error:', error);
+      res.status(500).json({ error: 'Failed to get user statistics' });
+    }
   }
 };
 

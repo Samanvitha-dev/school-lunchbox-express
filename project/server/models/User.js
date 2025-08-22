@@ -269,6 +269,26 @@ class User {
     `);
     return result.rows;
   }
+
+  static async getUserStatistics() {
+    const result = await db.query(`
+      SELECT 
+        COUNT(*) FILTER (WHERE user_type = 'parent') as total_parents,
+        COUNT(*) FILTER (WHERE user_type = 'delivery') as total_delivery,
+        COUNT(*) FILTER (WHERE user_type = 'school') as total_schools,
+        COUNT(*) FILTER (WHERE user_type = 'caterer') as total_caterers,
+        COUNT(*) as total_users
+      FROM users
+    `);
+    
+    return result.rows[0] || {
+      total_parents: 0,
+      total_delivery: 0,
+      total_schools: 0,
+      total_caterers: 0,
+      total_users: 0
+    };
+  }
 }
 
 module.exports = User;
