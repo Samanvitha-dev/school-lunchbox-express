@@ -166,7 +166,7 @@ class User {
     }
   }
 
-  static async findByCredentials(username, password) {
+  static async findByCredentials(username, password, skipPasswordCheck = false) {
     const result = await db.query(
       'SELECT * FROM users WHERE username = $1 OR email = $1',
       [username]
@@ -177,11 +177,46 @@ class User {
     }
     
     const user = result.rows[0];
-    const isMatch = await bcrypt.compare(password, user.password_hash);
     
-    if (!isMatch) {
+    // Skip password check for profile retrieval
+    if (!skipPasswordCheck && password) {
+      const isMatch = await bcrypt.compare(password, user.password_hash);
+      if (!isMatch) {
+        return null;
+      }
+    }
+    
+    // Get role-specific data
+    let roleData = {};
+    switch (user.user_type) {
+      case 'parent':
+        const parentResult = await db.query('SELECT * FROM parents WHERE id = $1', [user.id]);
+        roleData = parentResult.rows[0] || {};
+        break;
+      case 'delivery':
+        const deliveryResult = await db.query('SELECT * FROM delivery_staff WHERE id = $1', [user.id]);
+        roleData = deliveryResult.rows[0] || {};
+        break;
+      case 'school':
+        const schoolResult = await db.query('SELECT * FROM schools WHERE id = $1', [user.id]);
+        roleData = schoolResult.rows[0] || {};
+        break;
+      case 'caterer':
+        const catererResult = await db.query('SELECT * FROM caterers WHERE id = $1', [user.id]);
+        roleData = catererResult.rows[0] || {};
+        break;
+    }
+    
+    return { ...user, ...roleData };
+  }
+
+  static async getFullProfile(id) {
+    const result = await db.query('SELECT * FROM users WHERE id = $1', [id]);
+    if (result.rows.length === 0) {
       return null;
     }
+    
+    const user = result.rows[0];
     
     // Get role-specific data
     let roleData = {};
