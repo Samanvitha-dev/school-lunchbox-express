@@ -103,6 +103,7 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ onBackToLogin }) => {
       if (!formData.vehicleType.trim()) newErrors.push('Vehicle type is required');
       if (!formData.vehicleNumber.trim()) newErrors.push('Vehicle number is required');
       if (!formData.locationName.trim()) newErrors.push('Location is required');
+      if (!formData.serviceArea.trim()) newErrors.push('Service area is required');
     } else if (userType === 'school') {
       if (!formData.schoolName.trim()) newErrors.push('School name is required');
       if (!formData.schoolId.trim()) newErrors.push('School ID is required');
@@ -129,7 +130,7 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ onBackToLogin }) => {
       const userData: RegisterData = {
         username: formData.username,
         email: formData.email,
-        phone: formData.phone,
+        phone: formData.phone.replace(/[-\s]/g, ''),
         password: formData.password,
         userType
       };
@@ -147,21 +148,25 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ onBackToLogin }) => {
           userData.vehicleType = formData.vehicleType;
           userData.vehicleNumber = formData.vehicleNumber;
           userData.locationName = formData.locationName;
+          userData.serviceArea = formData.serviceArea || formData.locationName || 'Balaji Nagar';
+          userData.address = formData.address;
           break;
 
         case 'school':
           userData.schoolName = formData.schoolName;
           userData.schoolId = formData.schoolId;
           userData.contactPerson = formData.contactPerson;
-          userData.establishedYear = formData.establishedYear;
+          userData.establishedYear = String(parseInt(formData.establishedYear || '2000', 10));
           userData.classes = formData.classes;
           userData.locationName = formData.locationName;
+          userData.address = formData.address;
           break;
 
         case 'caterer':
           userData.businessName = formData.businessName;
           userData.contactPersonCaterer = formData.contactPersonCaterer;
           userData.locationName = formData.locationName;
+          userData.address = formData.address;
           break;
       }
 
