@@ -36,6 +36,8 @@ class Order {
       
       const qrCode = `LB${Date.now()}-${childName.toUpperCase().replace(/\s+/g, '')}`;
       const loyaltyPointsEarned = Math.floor(amount / 10);
+      // Generate tracking ID like TRK123456
+      const trackingId = `TRK${Math.floor(100000 + Math.random() * 900000)}`;
       
       // Create order
       const orderResult = await client.query(
@@ -43,14 +45,14 @@ class Order {
           parent_id, child_id, child_name, school_id, school_name,
           pickup_address, delivery_address, pickup_door_no, delivery_door_no,
           order_date, delivery_time, special_notes, is_recurring, recurring_days, 
-          amount, delivery_charge, distance_km, qr_code, estimated_time, order_type, 
+          amount, delivery_charge, distance_km, qr_code, tracking_id, estimated_time, order_type, 
           caterer_id, loyalty_points_earned, loyalty_points_used
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23) RETURNING *`,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24) RETURNING *`,
         [
           parentId, childId, childName, schoolId, schoolName,
           pickupAddress, deliveryAddress, pickupDoorNo, deliveryDoorNo,
           orderDate, deliveryTime, specialNotes, isRecurring, recurringDays || [],
-          amount, deliveryCharge, distance, qrCode, 25, orderType,
+          amount, deliveryCharge, distance, qrCode, trackingId, 25, orderType,
           catererId, loyaltyPointsEarned, loyaltyPointsUsed || 0
         ]
       );
