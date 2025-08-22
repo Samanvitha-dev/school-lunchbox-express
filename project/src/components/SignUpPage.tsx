@@ -98,21 +98,27 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ onBackToLogin }) => {
       if (!formData.locationName.trim()) newErrors.push('Location name is required');
       if (!formData.cityName.trim()) newErrors.push('City name is required');
       if (!formData.address.trim()) newErrors.push('Full address is required');
+      if (!formData.houseNo.trim()) newErrors.push('House number is required');
     } else if (userType === 'delivery') {
       if (!formData.name.trim()) newErrors.push('Full name is required');
       if (!formData.vehicleType.trim()) newErrors.push('Vehicle type is required');
       if (!formData.vehicleNumber.trim()) newErrors.push('Vehicle number is required');
       if (!formData.locationName.trim()) newErrors.push('Location is required');
       if (!formData.serviceArea.trim()) newErrors.push('Service area is required');
+      if (!formData.address.trim()) newErrors.push('Address is required');
     } else if (userType === 'school') {
       if (!formData.schoolName.trim()) newErrors.push('School name is required');
       if (!formData.schoolId.trim()) newErrors.push('School ID is required');
       if (!formData.contactPerson.trim()) newErrors.push('Contact person is required');
       if (!formData.locationName.trim()) newErrors.push('Location is required');
+      if (!formData.address.trim()) newErrors.push('Address is required');
+      const yearNum = parseInt(formData.establishedYear || '');
+      if (!yearNum || yearNum < 1800 || yearNum > new Date().getFullYear()) newErrors.push('Established year is invalid');
     } else if (userType === 'caterer') {
       if (!formData.businessName.trim()) newErrors.push('Business name is required');
       if (!formData.contactPersonCaterer.trim()) newErrors.push('Contact person is required');
       if (!formData.locationName.trim()) newErrors.push('Location is required');
+      if (!formData.address.trim()) newErrors.push('Address is required');
     }
 
     setErrors(newErrors);
@@ -156,7 +162,7 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ onBackToLogin }) => {
           userData.schoolName = formData.schoolName;
           userData.schoolId = formData.schoolId;
           userData.contactPerson = formData.contactPerson;
-          userData.establishedYear = String(parseInt(formData.establishedYear || '2000', 10));
+          userData.establishedYear = parseInt(formData.establishedYear || '2000', 10);
           userData.classes = formData.classes;
           userData.locationName = formData.locationName;
           userData.address = formData.address;

@@ -25,7 +25,7 @@ export interface RegisterData {
   schoolName?: string;
   schoolId?: string;
   contactPerson?: string;
-  establishedYear?: string;
+  establishedYear?: number;
   classes?: string;
   // Caterer specific
   businessName?: string;
