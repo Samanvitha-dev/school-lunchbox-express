@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS parents (
 CREATE TABLE IF NOT EXISTS delivery_staff (
 	id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
 	name VARCHAR(120) NOT NULL,
+	location_name VARCHAR(80),
 	address TEXT,
 	latitude DECIMAL(10,8),
 	longitude DECIMAL(11,8),
@@ -57,6 +58,7 @@ CREATE TABLE IF NOT EXISTS schools (
 	id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
 	school_name VARCHAR(150) NOT NULL,
 	school_id VARCHAR(50) UNIQUE NOT NULL,
+	location_name VARCHAR(80),
 	address TEXT,
 	latitude DECIMAL(10,8),
 	longitude DECIMAL(11,8),
@@ -69,6 +71,7 @@ CREATE TABLE IF NOT EXISTS schools (
 CREATE TABLE IF NOT EXISTS caterers (
 	id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
 	business_name VARCHAR(150) NOT NULL,
+	location_name VARCHAR(80),
 	address TEXT,
 	latitude DECIMAL(10,8),
 	longitude DECIMAL(11,8),

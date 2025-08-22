@@ -84,25 +84,25 @@ class User {
             ? serviceArea.split(',').map(s => s.trim()).filter(Boolean)
             : [locationName].filter(Boolean);
           await client.query(
-            `INSERT INTO delivery_staff (id, name, address, latitude, longitude, vehicle_type, vehicle_number, service_area) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-            [userId, name, coordinates?.address || address, coordinates?.latitude, coordinates?.longitude, vehicleType, vehicleNumber, areas]
+            `INSERT INTO delivery_staff (id, name, location_name, address, latitude, longitude, vehicle_type, vehicle_number, service_area) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            [userId, name, locationName, coordinates?.address || address, coordinates?.latitude, coordinates?.longitude, vehicleType, vehicleNumber, areas]
           );
           break;
           
         case 'school':
           await client.query(
-            `INSERT INTO schools (id, school_name, school_id, address, latitude, longitude, contact_person, established_year, classes) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-            [userId, schoolName, schoolId, coordinates?.address || address, coordinates?.latitude, coordinates?.longitude, contactPerson, parseInt(establishedYear || 2000, 10), classes?.split(',') || ['1st Grade', '2nd Grade', '3rd Grade', '4th Grade', '5th Grade']]
+            `INSERT INTO schools (id, school_name, school_id, location_name, address, latitude, longitude, contact_person, established_year, classes) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+            [userId, schoolName, schoolId, locationName, coordinates?.address || address, coordinates?.latitude, coordinates?.longitude, contactPerson, parseInt(establishedYear || 2000, 10), classes?.split(',') || ['1st Grade', '2nd Grade', '3rd Grade', '4th Grade', '5th Grade']]
           );
           break;
           
         case 'caterer':
           await client.query(
-            `INSERT INTO caterers (id, business_name, address, latitude, longitude, contact_person) 
-             VALUES ($1, $2, $3, $4, $5, $6)`,
-            [userId, businessName, coordinates?.address || address, coordinates?.latitude, coordinates?.longitude, contactPersonCaterer]
+            `INSERT INTO caterers (id, business_name, location_name, address, latitude, longitude, contact_person) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [userId, businessName, locationName, coordinates?.address || address, coordinates?.latitude, coordinates?.longitude, contactPersonCaterer]
           );
           break;
       }
