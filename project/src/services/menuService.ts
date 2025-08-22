@@ -5,10 +5,11 @@ export interface MenuItemData {
   description?: string;
   items: string;
   price: number;
-  category: 'lunchbox' | 'fruit-bowl' | 'snack';
-  imageUrl?: string;
-  allergens?: string;
+  category: 'lunchbox' | 'fruit_bowl' | 'other'; // Updated to match database enum
+  imageUrl?: string; // Maps to image_url in database
+  allergens?: string[] | string; // Will be converted to array in backend
   calories?: number;
+  proteinGrams?: number; // Maps to protein_grams in database
   protein?: string;
   carbs?: string;
   fat?: string;
@@ -17,7 +18,16 @@ export interface MenuItemData {
 
 class MenuService {
   async createMenuItem(menuData: MenuItemData) {
-    const response = await api.post(endpoints.menu, menuData);
+    // Format data for backend
+    const formattedData = {
+      ...menuData,
+      allergens: Array.isArray(menuData.allergens) 
+        ? menuData.allergens.join(',') 
+        : menuData.allergens || '',
+      proteinGrams: menuData.proteinGrams || Number(menuData.protein) || 0
+    };
+    
+    const response = await api.post(endpoints.menu, formattedData);
     return response.data;
   }
 
@@ -27,7 +37,16 @@ class MenuService {
   }
 
   async updateMenuItem(id: string, menuData: Partial<MenuItemData>) {
-    const response = await api.put(`${endpoints.menu}/${id}`, menuData);
+    // Format data for backend
+    const formattedData = {
+      ...menuData,
+      allergens: Array.isArray(menuData.allergens) 
+        ? menuData.allergens.join(',') 
+        : menuData.allergens || '',
+      proteinGrams: menuData.proteinGrams || Number(menuData.protein) || 0
+    };
+    
+    const response = await api.put(`${endpoints.menu}/${id}`, formattedData);
     return response.data;
   }
 

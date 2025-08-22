@@ -81,7 +81,7 @@ export default function ParentDashboard() {
   const [orderMode, setOrderMode] = useState<'home' | 'caterer'>('home');
   const [newChild, setNewChild] = useState({
     name: '',
-    school: '',
+    schoolName: '', // Changed from 'school' to match database schema
     class: '',
     age: '',
     allergies: '',
@@ -219,21 +219,21 @@ export default function ParentDashboard() {
   };
 
   const handleAddChild = async () => {
-    if (newChild.name && newChild.school && newChild.class) {
+    if (newChild.name && newChild.schoolName && newChild.class) {
       try {
         await userService.addChild({
           name: newChild.name,
-          schoolName: newChild.school,
+          schoolName: newChild.schoolName,
           class: newChild.class,
-          age: parseInt(newChild.age) || 0,
+          age: parseInt(newChild.age) || 8,
           allergies: newChild.allergies,
           preferences: newChild.preferences
-        } as any);
+        });
         await loadChildren();
-        setNewChild({ name: '', school: '', class: '', age: '', allergies: '', preferences: '' });
+        setNewChild({ name: '', schoolName: '', class: '', age: '', allergies: '', preferences: '' });
         setShowAddChild(false);
       } catch (e) {
-        // no-op
+        console.error('Error adding child:', e);
       }
     }
   };
@@ -275,6 +275,46 @@ export default function ParentDashboard() {
     const itemsTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
     const deliveryFee = 15;
     return itemsTotal + deliveryFee;
+  };
+
+  const handlePlaceOrder = async () => {
+    if (cart.length === 0 || children.length === 0) return;
+    
+    try {
+      // Use first child for demo - in real app, user should select
+      const selectedChild = children[0];
+      
+      const orderData = {
+        childId: selectedChild.id,
+        orderDate: new Date().toISOString().split('T')[0],
+        deliveryTime: '12:00 PM',
+        specialNotes: '',
+        isRecurring: false,
+        recurringDays: [],
+        orderType: orderMode,
+        items: orderMode === 'caterer' ? cart.map(item => ({
+          menuItem: {
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            catererId: 'caterer-1' // Default caterer ID
+          },
+          quantity: item.quantity,
+          specialInstructions: ''
+        })) : [],
+        loyaltyPointsUsed: 0
+      };
+      
+      await orderService.createOrder(orderData);
+      setCart([]); // Clear cart after successful order
+      await loadOrders(); // Refresh orders
+      
+      // Show success notification
+      alert('Order placed successfully!');
+    } catch (error) {
+      console.error('Error placing order:', error);
+      alert('Failed to place order. Please try again.');
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -464,8 +504,8 @@ export default function ParentDashboard() {
               <input
                 type="text"
                 placeholder="School Name"
-                value={newChild.school}
-                onChange={(e) => setNewChild({...newChild, school: e.target.value})}
+                value={newChild.schoolName}
+                onChange={(e) => setNewChild({...newChild, schoolName: e.target.value})}
                 className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
               <input
@@ -665,8 +705,12 @@ export default function ParentDashboard() {
                   <span>₹{getTotalAmount()}</span>
                 </div>
                 
-                <button className="w-full bg-orange-500 text-white py-3 rounded-lg mt-4 hover:bg-orange-600 transition-colors">
-                  Proceed to Checkout
+                <button 
+                  onClick={handlePlaceOrder}
+                  disabled={children.length === 0}
+                  className="w-full bg-orange-500 text-white py-3 rounded-lg mt-4 hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {children.length === 0 ? 'Add a child first' : 'Place Order'}
                 </button>
               </div>
             </div>

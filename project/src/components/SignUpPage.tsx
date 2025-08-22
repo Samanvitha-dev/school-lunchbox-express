@@ -16,11 +16,13 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ onBackToLogin }) => {
     phone: '',
     password: '',
     confirmPassword: '',
+    // Common fields
+    doorNo: '', // Added missing door_no field
+    address: '',
+    locationName: '',
     // Parent specific
     houseNo: '',
-    locationName: '',
     cityName: '',
-    address: '',
     // Delivery specific
     name: '',
     vehicleType: '',
@@ -93,26 +95,28 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ onBackToLogin }) => {
       newErrors.push('Please enter a valid phone number');
     }
 
+    // Common required fields
+    if (!formData.locationName.trim()) newErrors.push('Location name is required');
+    if (!formData.address.trim()) newErrors.push('Address is required');
+
     // Type-specific validations
     if (userType === 'parent') {
-      if (!formData.locationName.trim()) newErrors.push('Location name is required');
+      if (!formData.houseNo.trim()) newErrors.push('House number is required');
       if (!formData.cityName.trim()) newErrors.push('City name is required');
-      if (!formData.address.trim()) newErrors.push('Full address is required');
     } else if (userType === 'delivery') {
       if (!formData.name.trim()) newErrors.push('Full name is required');
       if (!formData.vehicleType.trim()) newErrors.push('Vehicle type is required');
       if (!formData.vehicleNumber.trim()) newErrors.push('Vehicle number is required');
-      if (!formData.locationName.trim()) newErrors.push('Location is required');
       if (!formData.serviceArea.trim()) newErrors.push('Service area is required');
     } else if (userType === 'school') {
       if (!formData.schoolName.trim()) newErrors.push('School name is required');
       if (!formData.schoolId.trim()) newErrors.push('School ID is required');
       if (!formData.contactPerson.trim()) newErrors.push('Contact person is required');
-      if (!formData.locationName.trim()) newErrors.push('Location is required');
+      if (!formData.establishedYear.trim()) newErrors.push('Established year is required');
+      if (!formData.classes.trim()) newErrors.push('Classes offered is required');
     } else if (userType === 'caterer') {
       if (!formData.businessName.trim()) newErrors.push('Business name is required');
       if (!formData.contactPersonCaterer.trim()) newErrors.push('Contact person is required');
-      if (!formData.locationName.trim()) newErrors.push('Location is required');
     }
 
     setErrors(newErrors);
@@ -132,24 +136,25 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ onBackToLogin }) => {
         email: formData.email,
         phone: formData.phone.replace(/[-\s]/g, ''),
         password: formData.password,
-        userType
+        userType,
+        // Common fields
+        doorNo: formData.doorNo || formData.houseNo, // Use houseNo as doorNo for parents
+        address: formData.address,
+        locationName: formData.locationName
       };
 
       switch (userType) {
         case 'parent':
           userData.houseNo = formData.houseNo;
-          userData.locationName = formData.locationName;
           userData.cityName = formData.cityName;
-          userData.address = formData.address;
+          userData.doorNo = formData.houseNo; // For parents, houseNo becomes doorNo
           break;
 
         case 'delivery':
           userData.name = formData.name;
           userData.vehicleType = formData.vehicleType;
           userData.vehicleNumber = formData.vehicleNumber;
-          userData.locationName = formData.locationName;
           userData.serviceArea = formData.serviceArea || formData.locationName || 'Balaji Nagar';
-          userData.address = formData.address;
           break;
 
         case 'school':
@@ -158,15 +163,11 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ onBackToLogin }) => {
           userData.contactPerson = formData.contactPerson;
           userData.establishedYear = String(parseInt(formData.establishedYear || '2000', 10));
           userData.classes = formData.classes;
-          userData.locationName = formData.locationName;
-          userData.address = formData.address;
           break;
 
         case 'caterer':
           userData.businessName = formData.businessName;
           userData.contactPersonCaterer = formData.contactPersonCaterer;
-          userData.locationName = formData.locationName;
-          userData.address = formData.address;
           break;
       }
 

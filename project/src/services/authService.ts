@@ -11,11 +11,13 @@ export interface RegisterData {
   phone: string;
   password: string;
   userType: 'parent' | 'delivery' | 'school' | 'caterer';
+  // Common required fields for all user types
+  doorNo?: string;
+  address?: string;
+  locationName?: string;
   // Parent specific
   houseNo?: string;
-  locationName?: string;
   cityName?: string;
-  address?: string;
   // Delivery specific
   name?: string;
   vehicleType?: string;
