@@ -4,22 +4,22 @@ const Notification = require('../models/Notification');
 const menuController = {
   async createMenuItem(req, res) {
     try {
-      const { name, description, items, price, category, imageUrl, allergens, calories, protein, carbs, fat, fiber } = req.body;
+      const { name, description, price, category, imageUrl, allergens, calories, proteinGrams } = req.body;
       
       const menuData = {
         catererId: req.user.id,
         name,
         description,
-        items: items.split(',').map(item => item.trim()),
         price: parseFloat(price),
         category,
         imageUrl: imageUrl || 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg',
-        allergens: allergens ? allergens.split(',').map(allergen => allergen.trim()) : [],
+        allergens: Array.isArray(allergens)
+          ? allergens
+          : (typeof allergens === 'string' && allergens.length > 0
+            ? allergens.split(',').map(allergen => allergen.trim())
+            : []),
         calories: parseInt(calories) || 0,
-        protein: protein || '0g',
-        carbs: carbs || '0g',
-        fat: fat || '0g',
-        fiber: fiber || '0g'
+        proteinGrams: parseInt(proteinGrams) || 0
       };
       
       const menuItem = await Menu.create(menuData);
@@ -36,16 +36,16 @@ const menuController = {
 
   async getMenuItems(req, res) {
     try {
-      let menuItems = [];
+      let items = [];
       
       if (req.user.user_type === 'caterer') {
-        menuItems = await Menu.findByCatererId(req.user.id);
+        items = await Menu.findByCatererId(req.user.id);
       } else {
         // For parents and others, get all available items
-        menuItems = await Menu.getAvailable();
+        items = await Menu.getAvailable();
       }
       
-      res.json({ menuItems });
+      res.json({ items });
     } catch (error) {
       console.error('Get menu items error:', error);
       res.status(500).json({ error: 'Failed to get menu items' });
@@ -57,12 +57,17 @@ const menuController = {
       const { id } = req.params;
       const updateData = { ...req.body };
       
-      if (updateData.items && typeof updateData.items === 'string') {
-        updateData.items = updateData.items.split(',').map(item => item.trim());
-      }
-      
       if (updateData.allergens && typeof updateData.allergens === 'string') {
         updateData.allergens = updateData.allergens.split(',').map(allergen => allergen.trim());
+      }
+      if (typeof updateData.calories !== 'undefined') {
+        updateData.calories = parseInt(updateData.calories) || 0;
+      }
+      if (typeof updateData.proteinGrams !== 'undefined') {
+        updateData.proteinGrams = parseInt(updateData.proteinGrams) || 0;
+      }
+      if (typeof updateData.price !== 'undefined') {
+        updateData.price = parseFloat(updateData.price);
       }
       
       const menuItem = await Menu.update(id, updateData);
